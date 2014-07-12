@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rsf_services'
-  s.version = '0.1.0'
+  s.version = '0.1.1'
   s.summary = 'Designed to run within a server to run RSF jobs, as well as otherservices.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/**/*.rb']

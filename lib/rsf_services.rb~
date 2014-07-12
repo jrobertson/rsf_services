@@ -9,15 +9,11 @@ require 'logger'
 
 class RSFServices < RScript
 
-  attr_reader :services
-
-  def initialize(reg_path='', package_basepath: '', log: nil)
-
+  def initialize(reg_path='', package_basepath: '')
     super()
 
-    @package_basepath, @services = package_basepath, {}
-    @log = log
-    @logger = Logger.new log, 'daily' if log
+    @services = {}
+    @package_basepath = package_basepath
 
     if reg_path.length > 0 then
 
@@ -58,8 +54,6 @@ class RSFServices < RScript
     end
 
   end
-
-  private
 
   def log(msg)
     if @log == true then
