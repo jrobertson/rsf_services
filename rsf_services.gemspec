@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'rsf_services'
-  s.version = '0.1.1'
-  s.summary = 'Designed to run within a server to run RSF jobs, as well as otherservices.'
+  s.version = '0.1.2'
+  s.summary = 'Designed to run within a server to run RSF jobs, as well as other services.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/**/*.rb']
   s.add_runtime_dependency('rscript', '~> 0.1', '>= 0.1.25')
