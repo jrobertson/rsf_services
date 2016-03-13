@@ -25,7 +25,7 @@ class RSFServices < RScript
 
       # load the system/startup RSF jobs
 
-      jobs = reg.get_keys('system/startup/.[load="1"]').inject({}) do |r, job|
+      jobs = reg.get_keys('system/startup/*[load="1"]').inject({}) do |r, job|
         settings = reg.get_keys("system/packages/#{job.name}/*")\
                           .inject({}){|r,x| r.merge(x.name.to_sym => x.text) }
         r.merge(job.name => settings)
