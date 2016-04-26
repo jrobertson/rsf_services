@@ -11,7 +11,7 @@ class RSFServices < RScript
 
   attr_reader :services
 
-  def initialize(reg_path='', package_basepath: '', logfile: nil)
+  def initialize(reg=nil, package_basepath: '', logfile: nil)
     
     @log = Logger.new logfile, 'daily' if logfile
 
@@ -19,13 +19,19 @@ class RSFServices < RScript
 
     @package_basepath, @services = package_basepath, {}
 
-    if reg_path.length > 0 then
+    if reg then
 
-      @services['registry'] = reg = DWSRegistry.new reg_path
-
+      @services['registry'] = if reg.is_a? String then
+        #reg = DWSRegistry.new reg_path
+      else
+        reg
+      end
+      
       # load the system/startup RSF jobs
 
-      jobs = reg.get_keys('system/startup/*[load="1"]').inject({}) do |r, job|
+      startup = reg.get_key('system/startup')
+      
+      jobs =  startup.xpath('*[load="1"]').inject({}) do |r, job|
         settings = reg.get_keys("system/packages/#{job.name}/*")\
                           .inject({}){|r,x| r.merge(x.name.to_sym => x.text) }
         r.merge(job.name => settings)
@@ -42,10 +48,12 @@ class RSFServices < RScript
   def run_job(package, jobs, params={}, *qargs, 
                   package_path: ("%s/%s.rsf" % [@package_basepath, package]))
 
-    log 'inside run job' + ("package: %s jobs: %s params: %s qargs: %s package_path: %s" % [package, jobs, params, qargs, package_path])
+    log 'run job' + ("package: %s jobs: %s params: %s qargs: %s " + \
+            " package_path: %s" % [package, jobs, params, qargs, package_path])
     yield(params) if block_given?    
     
     a = [package_path, jobs.split(/\s/).map{|x| "//job:%s" % x} ,qargs].flatten
+
     result, args = read(a)
 
     rws = self
@@ -72,7 +80,7 @@ class RSFServices < RScript
 
   def log(msg)
 
-    @log.debug msg if @log
+    @log.debug ':::'  + msg[0..250] if @log
 
   end
     
