@@ -15,14 +15,14 @@ class RSFServices < RScript
     
     @log = Logger.new logfile, 'daily' if logfile
 
-    super(log: logfile)
+    super(logfile: logfile)
 
     @package_basepath, @services = package_basepath, {}
 
     if reg then
 
       @services['registry'] = if reg.is_a? String then
-        #reg = DWSRegistry.new reg_path
+        reg = DWSRegistry.new reg_path
       else
         reg
       end
