@@ -8,6 +8,43 @@ require 'logger'
 
 
 class RSFServices < RScript
+  
+  # this class (Package) is a modified copy of the code from 
+  # the rsf_services gem on 28-Jul 2016
+  
+  class Package
+    
+    def initialize(obj, parent_url, package)
+
+      @obj, @package = obj, package
+
+      @url = File.join(parent_url, package + '.rsf')
+      doc = Rexle.new open(@url, 
+                           'UserAgent' => 'RSFServices::Package reader').read
+      a = doc.root.xpath 'job/attribute::id'
+      
+      a.each do |attr|
+        method_name = attr.value.gsub('-','_') 
+        method = "def %s(*args); run_job('%s', args) ; end" % \
+                                                            ([method_name] * 2)
+        self.instance_eval(method)
+      end
+
+    end
+
+    private
+    
+    def run_job(method_name, *args)
+      
+      args.flatten!(1)
+      params = args.pop if args.find {|x| x.is_a? Hash}
+      a = ['//job:' + method_name, @url, args].flatten(1)
+  
+      @obj.run a #, params
+    end
+    
+
+  end  
 
   attr_reader :services
 
@@ -74,14 +111,19 @@ class RSFServices < RScript
       log(err_label)
     end
     
-  end
-
+  end  
+  
+  
   private
-
+  
   def log(msg)
 
     @log.debug ':::'  + msg[0..250] if @log
 
   end
-    
+  
+  def method_missing(method_name, *args)
+    Package.new self, @package_basepath, method_name.to_s
+  end    
+   
 end
