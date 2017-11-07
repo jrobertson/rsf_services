@@ -4,13 +4,9 @@
 
 require 'rscript'
 require 'dws-registry'
-require 'logger'
 
 
-class RSFServices < RScript
-  
-  # this class (Package) is a modified copy of the code from 
-  # the rsf_services gem on 28-Jul 2016
+class RSFServices < RScript  
   
   class Package
     
@@ -48,11 +44,11 @@ class RSFServices < RScript
 
   attr_reader :services
 
-  def initialize(reg=nil, package_basepath: '', logfile: nil)
+  def initialize(reg=nil, package_basepath: '', log: nil)
     
-    @log = Logger.new logfile, 'daily' if logfile
+    @log = log
 
-    super(logfile: logfile)
+    super(log: log)
 
     @package_basepath, @services = package_basepath, {}
 
@@ -85,45 +81,44 @@ class RSFServices < RScript
   def run_job(package, jobs, params={}, *qargs, 
                   package_path: ("%s/%s.rsf" % [@package_basepath, package]))
 
-    log 'run job' + ("package: %s jobs: %s params: %s qargs: %s " + \
+    if @log then
+      @log.info 'RSFServices/run job: ' + 
+          ("package: %s jobs: %s params: %s qargs: %s " + \
             " package_path: %s" % [package, jobs, params, qargs, package_path])
+    end
+    
     yield(params) if block_given?    
     
     a = [package_path, jobs.split(/\s/).map{|x| "//job:%s" % x} ,qargs].flatten
 
-    result, args = read(a)
+    c, args = read(a)
 
     rws = self
 
     begin
       
-      log 'result : ' +  result
+      @log.info 'RSFServices/run job: code: ' + c if @log 
 
-      r = eval result
+      r = eval c
       
-      log  'r : ' + r.inspect
+      @log.info 'RSFServices/run job: result: ' + r if @log 
+      
       return r
 
     rescue Exception => e  
+      
       params = {}
-      err_label = e.message.to_s + " :: \n" + e.backtrace.join("\n")      
-      log 'err_label : ' + err_label.inspect
-      log(err_label)
+      err_label = e.message.to_s + " :: \n" + e.backtrace.join("\n")            
+      @log.debug 'RSFServices/run_job/error: ' + err_label if @log
+
     end
     
-  end  
-  
+  end    
   
   private
-  
-  def log(msg)
-
-    @log.debug ':::'  + msg[0..250] if @log
-
-  end
   
   def method_missing(method_name, *args)
     Package.new self, @package_basepath, method_name.to_s
   end    
-   
+  
 end
