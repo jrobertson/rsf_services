@@ -6,7 +6,57 @@ require 'rscript'
 require 'dws-registry'
 
 
-class RSFServices < RScript  
+class RScriptRW < RScript
+  
+  def read(args=[], type: :get)
+    
+    @log.info 'RScript/read: args: '  + args.inspect if @log
+    
+    threads = []
+    
+    if args.to_s[/\/\/job:/] then 
+
+      ajob = []
+      
+      args.each_index do |i| 
+        if args[i].to_s[/\/\/job:/] then          
+          ajob << "@id='#{$'}' and @type='#{type.to_s}'"; args[i] = nil
+        end
+      end
+
+      args.compact!
+
+      out = read_rsf(args) do |doc|
+        
+        doc.root.xpath('//job').each do |x| 
+          x.attributes[:type] = type.to_s unless x.attributes[:type]
+        end
+        
+        if @log then
+          @log.info 'RScriptRW/read: code: '  + doc.xml.inspect         
+        end
+        
+        doc.root.xpath("//job[#{ajob.join(' or ')}]").map do |job|
+          job.xpath('script').map {|s| read_script(s)}.join("\n")
+        end.join("\n")        
+      end
+
+      raise "job not found" unless out.length > 0
+      out
+      
+    else    
+      out = read_rsf(args) {|doc| doc.root.xpath('//script').map {|s| read_script(s)}}.join("\n")   
+    end    
+          
+    @log.info 'RScript/read: code: '  + out.inspect if @log
+
+    [out, args]    
+    
+  end
+  
+end
+
+class RSFServices < RScriptRW
   
   class Package
     
@@ -30,7 +80,7 @@ class RSFServices < RScript
 
     private
     
-    def run_job(method_name, *args)
+    def run_job(method_name, *args, type: :get)
       
       args.flatten!(1)
       params = args.pop if args.find {|x| x.is_a? Hash}
