@@ -8,7 +8,13 @@ require 'dws-registry'
 
 class RScriptRW < RScript
   
-  def read(args=[], type: :get)
+  attr_accessor :type
+  
+  def initialize(log: log)
+    super(log: log)
+  end
+  
+  def read(args=[])
     
     @log.info 'RScript/read: args: '  + args.inspect if @log
     
@@ -20,7 +26,7 @@ class RScriptRW < RScript
       
       args.each_index do |i| 
         if args[i].to_s[/\/\/job:/] then          
-          ajob << "@id='#{$'}' and @type='#{type.to_s}'"; args[i] = nil
+          ajob << "@id='#{$'}' and @type='#{self.type.to_s}'"; args[i] = nil
         end
       end
 
@@ -45,7 +51,8 @@ class RScriptRW < RScript
       out
       
     else    
-      out = read_rsf(args) {|doc| doc.root.xpath('//script').map {|s| read_script(s)}}.join("\n")   
+      out = read_rsf(args) {|doc| doc.root.xpath('//script')\
+                            .map {|s| read_script(s)}}.join("\n") 
     end    
           
     @log.info 'RScript/read: code: '  + out.inspect if @log
@@ -57,6 +64,22 @@ class RScriptRW < RScript
 end
 
 class RSFServices < RScriptRW
+  
+  class PackageMethod
+    
+    def initialize(parent, package_basepath, type: :get)      
+      @parent, @package_basepath, @type = parent, package_basepath, type
+      @parent.type = type
+    end
+    
+    private
+    
+    def method_missing(method_name, *args)
+      Package.new @parent, @package_basepath, method_name.to_s
+    end        
+    
+  end  
+  
   
   class Package
     
@@ -80,7 +103,7 @@ class RSFServices < RScriptRW
 
     private
     
-    def run_job(method_name, *args, type: :get)
+    def run_job(method_name, *args)
       
       args.flatten!(1)
       params = args.pop if args.find {|x| x.is_a? Hash}
@@ -127,6 +150,14 @@ class RSFServices < RScriptRW
     end
 
   end
+  
+  def get()
+    PackageMethod.new self, @package_basepath, type: :get
+  end  
+  
+  def post()
+    PackageMethod.new self, @package_basepath, type: :post
+  end
 
   def run_job(package, jobs, params={}, *qargs, 
                   package_path: ("%s/%s.rsf" % [@package_basepath, package]))
@@ -168,6 +199,7 @@ class RSFServices < RScriptRW
   private
   
   def method_missing(method_name, *args)
+    self.type = :get
     Package.new self, @package_basepath, method_name.to_s
   end    
   
