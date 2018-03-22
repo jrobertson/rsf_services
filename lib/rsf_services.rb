@@ -109,7 +109,7 @@ class RSFServices < RScriptRW
       params = args.pop if args.find {|x| x.is_a? Hash}
       a = ['//job:' + method_name, @url, args].flatten(1)
   
-      @obj.run a #, params
+      @obj.run a, params
     end
     
 

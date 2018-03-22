@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rsf_services'
-  s.version = '0.5.2'
+  s.version = '0.5.3'
   s.summary = 'Runs within a DRb server to run RSF jobs, as well as ' + 
       'other services.'
   s.authors = ['James Robertson']
