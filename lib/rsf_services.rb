@@ -67,15 +67,15 @@ class RSFServices < RScriptRW
   
   class PackageMethod
     
-    def initialize(parent, package_basepath, type: :get)      
-      @parent, @package_basepath, @type = parent, package_basepath, type
+    def initialize(parent, type: :get)      
+      @parent = parent
       @parent.type = type
     end
     
     private
     
     def method_missing(method_name, *args)
-      Package.new @parent, @package_basepath, method_name.to_s
+      Package.new @parent, method_name.to_s
     end        
     
   end  
@@ -83,11 +83,11 @@ class RSFServices < RScriptRW
   
   class Package
     
-    def initialize(obj, parent_url, package)
+    def initialize(obj, package)
 
       @obj, @package = obj, package
 
-      @url = File.join(parent_url, package + '.rsf')
+      @url = File.join(@obj.package_basepath, package + '.rsf')
       doc = Rexle.new open(@url, 
                            'UserAgent' => 'RSFServices::Package reader').read
       a = doc.root.xpath 'job/attribute::id'
@@ -115,7 +115,7 @@ class RSFServices < RScriptRW
 
   end  
 
-  attr_reader :services
+  attr_reader :services, :package_basepath
 
   def initialize(reg=nil, package_basepath: '', log: nil)
     
@@ -151,12 +151,20 @@ class RSFServices < RScriptRW
 
   end
   
+  def delete()
+    PackageMethod.new self, type: :delete
+  end    
+  
   def get()
-    PackageMethod.new self, @package_basepath, type: :get
+    PackageMethod.new self
+  end  
+  
+  def put()
+    PackageMethod.new self, type: :put
   end  
   
   def post()
-    PackageMethod.new self, @package_basepath, type: :post
+    PackageMethod.new self, type: :post
   end
 
   def run_job(package, jobs, params={}, *qargs, 
@@ -200,7 +208,7 @@ class RSFServices < RScriptRW
   
   def method_missing(method_name, *args)
     self.type = :get
-    Package.new self, @package_basepath, method_name.to_s
+    Package.new self, method_name.to_s
   end    
   
 end
