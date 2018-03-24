@@ -1,11 +1,11 @@
 Gem::Specification.new do |s|
   s.name = 'rsf_services'
-  s.version = '0.5.3'
+  s.version = '0.5.4'
   s.summary = 'Runs within a DRb server to run RSF jobs, as well as ' + 
       'other services.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/rsf_services.rb']
-  s.add_runtime_dependency('rscript', '~> 0.4', '>= 0.4.0')
+  s.add_runtime_dependency('rscript', '~> 0.4', '>= 0.4.1')
   s.add_runtime_dependency('dws-registry', '~> 0.4', '>= 0.4.0')
   s.signing_key = '../privatekeys/rsf_services.pem'
   s.cert_chain  = ['gem-public_cert.pem']

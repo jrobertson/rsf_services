@@ -83,9 +83,9 @@ class RSFServices < RScriptRW
   
   class Package
     
-    def initialize(obj, package)
+    def initialize(obj, package, debug: debug)
 
-      @obj, @package = obj, package
+      @obj, @package, @debug = obj, package, debug
 
       @url = File.join(@obj.package_basepath, package + '.rsf')
       doc = Rexle.new open(@url, 
@@ -93,10 +93,13 @@ class RSFServices < RScriptRW
       a = doc.root.xpath 'job/attribute::id'
       
       a.each do |attr|
+        
         method_name = attr.value.gsub('-','_') 
-        method = "def %s(*args); run_job('%s', args) ; end" % \
-                                                            ([method_name] * 2)
-        self.instance_eval(method)
+
+        define_singleton_method method_name.to_sym do |*args|
+          run_job method_name, args
+        end
+
       end
 
     end
@@ -105,21 +108,28 @@ class RSFServices < RScriptRW
     
     def run_job(method_name, *args)
       
+      puts 'inside Package::run_job: args: ' + args.inspect if @debug
+      
       args.flatten!(1)
-      params = args.pop if args.find {|x| x.is_a? Hash}
+      params = args.find {|x| x.is_a? Hash} ? args.pop : {}
       a = ['//job:' + method_name, @url, args].flatten(1)
-  
+      
+      if @debug then
+        puts 'a: ' + a.inspect
+        puts 'params: ' + params.inspect
+      end
+      
       @obj.run a, params
     end
     
 
   end  
 
-  attr_reader :services, :package_basepath
+  attr_reader :services, :package_basepath, :registry
 
-  def initialize(reg=nil, package_basepath: '', log: nil)
+  def initialize(reg=nil, package_basepath: '', log: nil, debug: true)
     
-    @log = log
+    @log, @debug = log, debug
 
     super(log: log)
 
@@ -127,11 +137,7 @@ class RSFServices < RScriptRW
 
     if reg then
 
-      @services['registry'] = if reg.is_a? String then
-        reg = DWSRegistry.new reg_path
-      else
-        reg
-      end
+      @registry = @services['registry'] = reg
       
       # load the system/startup RSF jobs
 
@@ -150,6 +156,7 @@ class RSFServices < RScriptRW
     end
 
   end
+  
   
   def delete()
     PackageMethod.new self, type: :delete
@@ -208,7 +215,7 @@ class RSFServices < RScriptRW
   
   def method_missing(method_name, *args)
     self.type = :get
-    Package.new self, method_name.to_s
+    Package.new self, method_name.to_s, debug: @debug
   end    
   
 end
