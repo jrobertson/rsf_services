@@ -22,37 +22,30 @@ class RScriptRW < RScript
     
     if args.to_s[/\/\/job:/] then 
 
-      ajob = []
+      ajob = ''
       
       args.each_index do |i| 
         if args[i].to_s[/\/\/job:/] then          
-          ajob << "@id='#{$'}' and @type='#{self.type.to_s}'"; args[i] = nil
+          ajob = $'; args[i] = nil
         end
       end
 
       args.compact!
 
-      out = read_rsf(args) do |doc|
-        
-        doc.root.xpath('//job').each do |x| 
-          x.attributes[:type] = type.to_s unless x.attributes[:type]
-        end
-        
-        if @log then
-          @log.info 'RScriptRW/read: code: '  + doc.xml.inspect         
-        end
-        
-        doc.root.xpath("//job[#{ajob.join(' or ')}]").map do |job|
-          job.xpath('script').map {|s| read_script(s)}.join("\n")
-        end.join("\n")        
-      end
+      a = read_rsfdoc(args)      
+      job = a.find do |xy| 
+        name, x = xy
+        name == ajob.to_sym and 
+            (x[:attributes][:type] || type.to_s == self.type.to_s)
+      end.last
 
+      out, attr = job[:code], job[:attributes]      
+      
       raise "job not found" unless out.length > 0
       out
       
     else    
-      out = read_rsf(args) {|doc| doc.root.xpath('//script')\
-                            .map {|s| read_script(s)}}.join("\n") 
+      out = read_rsfdoc(args).map {|x| x.last[:code]}.join("\n")
     end    
           
     @log.info 'RScript/read: code: '  + out.inspect if @log
@@ -137,7 +130,11 @@ class RSFServices < RScriptRW
 
     if reg then
 
-      @registry = @services['registry'] = reg
+      @registry = @services['registry'] = if reg.is_a? String then
+        reg = DWSRegistry.new reg_path
+      else
+        reg
+      end
       
       # load the system/startup RSF jobs
 
