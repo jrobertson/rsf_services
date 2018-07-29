@@ -10,12 +10,14 @@ class RScriptRW < RScript
   
   attr_accessor :type
   
-  def initialize(log: log)
-    super(log: log)
+  def initialize(log: log, debug: debug)
+    @type = :get
+    super(log: log, debug: debug)
   end
   
   def read(args=[])
     
+    puts 'inside read' if @debug
     @log.info 'RScript/read: args: '  + args.inspect if @log
     
     threads = []
@@ -31,12 +33,17 @@ class RScriptRW < RScript
       end
 
       args.compact!
+      
+      if @debug then
+        puts 'type: ' + type.to_s.inspect
+        puts 'self.type: '  + self.type.to_s.inspect
+      end
 
       a = read_rsfdoc(args)      
       job = a.find do |xy| 
         name, x = xy
         name == ajob.to_sym and 
-            (x[:attributes][:type] || type.to_s == self.type.to_s)
+            (x[:attributes][:type] || type.to_s) == self.type.to_s
       end.last
 
       out, attr = job[:code], job[:attributes]      
