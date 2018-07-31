@@ -2,7 +2,7 @@
 
 # file: rsf_services.rb
 
-require 'rscript'
+#require 'rscript'
 require 'app-mgr'
 require 'dws-registry'
 
@@ -162,7 +162,7 @@ class RSFServices < RScriptRW
       end
     end
     
-    @app = AppMgr.new(rsf: app_rsf, reg: reg, rsc: self)
+    @app = AppMgr.new(rsf: app_rsf, reg: reg, rsc: self) if app_rsf
 
   end
   
