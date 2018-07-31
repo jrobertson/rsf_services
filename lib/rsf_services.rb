@@ -3,7 +3,9 @@
 # file: rsf_services.rb
 
 require 'rscript'
+require 'app-mgr'
 require 'dws-registry'
+
 
 
 class RScriptRW < RScript
@@ -127,7 +129,8 @@ class RSFServices < RScriptRW
 
   attr_reader :services, :package_basepath, :registry
 
-  def initialize(reg=nil, package_basepath: '', log: nil, debug: true)
+  def initialize(reg=nil, package_basepath: '', log: nil, debug: true, 
+                 app_rsf: nil)
     
     @log, @debug = log, debug
 
@@ -158,6 +161,8 @@ class RSFServices < RScriptRW
                                                 package_path: settings[:url])
       end
     end
+    
+    @app = AppMgr.new(rsf: app_rsf, reg: reg, rsc: self)
 
   end
   
@@ -193,7 +198,7 @@ class RSFServices < RScriptRW
 
     c, args = read(a)
 
-    rws = self
+    rws, reg, app = self, @registry, @app
 
     begin
       
