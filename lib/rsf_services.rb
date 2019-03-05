@@ -8,63 +8,6 @@ require 'dws-registry'
 
 
 
-class RScriptRW < RScript
-  
-  attr_accessor :type
-  
-  def initialize(log: log, debug: debug)
-    @type = :get
-    super(log: log, debug: debug)
-  end
-  
-  def read(args=[])
-    
-    puts 'inside read' if @debug
-    @log.info 'RScript/read: args: '  + args.inspect if @log
-    
-    threads = []
-    
-    if args.to_s[/\/\/job:/] then 
-
-      ajob = ''
-      
-      args.each_index do |i| 
-        if args[i].to_s[/\/\/job:/] then          
-          ajob = $'; args[i] = nil
-        end
-      end
-
-      args.compact!
-      
-      if @debug then
-        puts 'type: ' + type.to_s.inspect
-        puts 'self.type: '  + self.type.to_s.inspect
-      end
-
-      a = read_rsfdoc(args)      
-      job = a.find do |xy| 
-        name, x = xy
-        name == ajob.to_sym and 
-            (x[:attributes][:type] || type.to_s) == self.type.to_s
-      end.last
-
-      out, attr = job[:code], job[:attributes]      
-      
-      raise "job not found" unless out.length > 0
-      out
-      
-    else    
-      out = read_rsfdoc(args).map {|x| x.last[:code]}.join("\n")
-    end    
-          
-    @log.info 'RScript/read: code: '  + out.inspect if @log
-
-    [out, args]    
-    
-  end
-  
-end
-
 class RSFServices < RScriptRW
   
   class PackageMethod
@@ -129,10 +72,12 @@ class RSFServices < RScriptRW
 
   attr_reader :services, :package_basepath, :registry
 
-  def initialize(reg=nil, package_basepath: '', log: nil, debug: true, 
+  def initialize(reg=nil, package_basepath: '', log: nil, debug: false, 
                  app_rsf: nil)
     
     @log, @debug = log, debug
+    
+    puts 'inside RSF_services' if @debug
 
     super(log: log)
 
