@@ -163,7 +163,15 @@ class RSFServices < RScriptRW
 
     end
     
-  end    
+  end
+  
+  def package_methods(package)
+    
+    url = File.join(@package_basepath, package + '.rsf')    
+    doc = Rexle.new open(url, 'UserAgent' => 'ClientRscript').read    
+    doc.root.xpath('job/attribute::id').map {|x| x.value.to_s.gsub('-','_') }
+
+  end
   
   private
   
