@@ -147,11 +147,11 @@ class RSFServices < RScriptRW
 
     begin
       
-      @log.info 'RSFServices/run job: code: ' + c if @log 
+      @log.info 'RSFServices/run job: code: ' + c if @log and c.is_a? String
 
       r = eval c
       
-      @log.info 'RSFServices/run job: result: ' + r if @log 
+      @log.info 'RSFServices/run job: result: ' + r if @log and r.is_a? String
       
       return r
 
