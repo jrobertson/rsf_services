@@ -139,7 +139,7 @@ class RSFServices < RScriptRW
     
     yield(params) if block_given?    
     
-    a = [package_path, jobs.split(/\s/).map{|x| "//job:%s" % x} ,qargs].flatten
+    a = [package_path, jobs.split(/\s/).map{|x| "//job:%s" % x} ,qargs].flatten(2)
 
     c, args = read(a)
 
@@ -150,6 +150,9 @@ class RSFServices < RScriptRW
       @log.info 'RSFServices/run job: code: ' + c if @log and c.is_a? String
 
       r = eval c
+      #thread = Thread.new {Thread.current[:v] = eval c}
+      #thread.join
+      #r = thread[:v] 
       
       @log.info 'RSFServices/run job: result: ' + r if @log and r.is_a? String
       
