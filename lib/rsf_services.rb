@@ -128,9 +128,10 @@ class RSFServices < RScriptRW
     PackageMethod.new self, type: :post
   end
 
-  def run_job(package, jobs, params={}, *qargs, 
-                  package_path: ("%s/%s.rsf" % [@package_basepath, package]))
+  def run_job(package, jobs, params={}, *qargs)
 
+    package_path = "%s/%s.rsf" % [@package_basepath, package]
+                   
     if @log then
       @log.info 'RSFServices/run job: ' + 
           ("package: %s jobs: %s params: %s qargs: %s " + \
@@ -141,7 +142,7 @@ class RSFServices < RScriptRW
     
     a = [package_path, jobs.split(/\s/).map{|x| "//job:%s" % x} ,qargs].flatten(2)
 
-    c, args = read(a)
+    c, args, _ = read(a)
 
     rws, reg, app = self, @registry, @app
 
