@@ -28,7 +28,7 @@ class RSFServices < RScriptRW
   
   class Package
     
-    def initialize(obj, package, debug: debug)
+    def initialize(obj, package, debug: false)
 
       @obj, @package, @debug = obj, package, debug
 
