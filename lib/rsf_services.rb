@@ -79,9 +79,11 @@ class RSFServices < RScriptRW
     
     puts 'inside RSF_services' if @debug
 
-    super(log: log)
+    super(log: log, debug: debug)
 
     @package_basepath, @services = package_basepath, {}
+    
+    @initialized = {}
 
     if reg then
 
@@ -129,28 +131,44 @@ class RSFServices < RScriptRW
   end
 
   def run_job(package, jobs, params={}, *qargs)
+    
+    puts 'inside run_job' #if @debug
 
     package_path = "%s/%s.rsf" % [@package_basepath, package]
                    
-    if @log then
-      @log.info 'RSFServices/run job: ' + 
+    if @log or @debug then
+      msg = 'RSFServices/run job: ' + 
           ("package: %s jobs: %s params: %s qargs: %s " + \
             " package_path: %s" % [package, jobs, params, qargs, package_path])
+      @log.info msg if @log
+      puts msg if @debug
     end
     
     yield(params) if block_given?    
     
     a = [package_path, jobs.split(/\s/).map{|x| "//job:%s" % x} ,qargs].flatten(2)
+    
+    puts 'a: ' + a.inspect if @debug
 
     c, args, _ = read(a)
-
+    puts 'c: ' + c.inspect if @debug
     rws, reg, app = self, @registry, @app
 
     begin
       
       @log.info 'RSFServices/run job: code: ' + c if @log and c.is_a? String
 
+      # if there is a job id called *initialize* then execute if it hasn't 
+      # already been executed
+
+      if self.jobs(package_path).include? :initialize and 
+          !@initialized[package_path]  and jobs != 'initialize' then
+        run_job(package, 'initialize')
+        @initialized[package_path] = true
+      end
+
       r = eval c
+      puts 'r: ' + r.inspect if @debug
       #thread = Thread.new {Thread.current[:v] = eval c}
       #thread.join
       #r = thread[:v] 
@@ -166,7 +184,7 @@ class RSFServices < RScriptRW
       @log.debug 'RSFServices/run_job/error: ' + err_label if @log
 
     end
-    
+  
   end
   
   def package_methods(package)
@@ -179,7 +197,7 @@ class RSFServices < RScriptRW
   
   private
   
-  def method_missing(method_name, *args)
+  def method_missing2(method_name, *args)
     self.type = :get
     Package.new self, method_name.to_s, debug: @debug
   end    
