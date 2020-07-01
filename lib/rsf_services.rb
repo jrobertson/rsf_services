@@ -7,7 +7,6 @@ require 'app-mgr'
 require 'dws-registry'
 
 
-
 class RSFServices < RScriptRW
   
   class PackageMethod
@@ -30,11 +29,22 @@ class RSFServices < RScriptRW
     
     def initialize(obj, package, debug: false)
 
+      
+      puts 'inside Package#initialize' if debug
+      
       @obj, @package, @debug = obj, package, debug
 
       @url = File.join(@obj.package_basepath, package + '.rsf')
-      doc = Rexle.new open(@url, 
-                           'UserAgent' => 'RSFServices::Package reader').read
+      
+      puts 'before Rexle' if @debug
+      puts '@url: ' + @url.inspect if @debug
+      
+      s, _ = RXFHelper.read(@url)
+      puts 's: ' + s.inspect if @debug
+      
+      doc = Rexle.new  s
+      puts 'before xpath' if @debug
+      
       a = doc.root.xpath 'job/attribute::id'
       
       a.each do |attr|
@@ -197,7 +207,9 @@ class RSFServices < RScriptRW
   
   private
   
-  def method_missing2(method_name, *args)
+  def method_missing(method_name, *args)
+    
+    puts 'inside method_missing' if @debug
     self.type = :get
     Package.new self, method_name.to_s, debug: @debug
   end    
