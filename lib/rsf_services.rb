@@ -5,6 +5,7 @@
 #require 'rscript'
 require 'app-mgr'
 require 'dws-registry'
+require 'rxfreader'
 
 
 class RSFServices < RScriptRW
@@ -39,7 +40,7 @@ class RSFServices < RScriptRW
       puts 'before Rexle' if @debug
       puts '@url: ' + @url.inspect if @debug
 
-      s, _ = RXFHelper.read(@url)
+      s, _ = RXFReader.read(@url)
       puts 's: ' + s.inspect if @debug
 
       doc = Rexle.new  s
